@@ -152,6 +152,86 @@ example (h : (∃ x : α, r)) : r :=
 example (a : α) : r → (∃ x : α, r) :=
   (assume h : r, exists.intro a h)
 
-example 
+example : (∃ x, p x ∧ r) ↔ (∃ x, p x) ∧ r :=
+  iff.intro
+    (assume h : (∃ x, p x ∧ r),
+      match h with ⟨x, hpx, hr⟩ :=
+        ⟨⟨x, hpx⟩, hr⟩
+      end)
+    (assume h : (∃ x, p x) ∧ r,
+      match h with ⟨⟨x, hpx⟩, hr⟩ :=
+        ⟨x, hpx, hr⟩
+      end)
+
+example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) :=
+  iff.intro
+    (assume h : (∃ x, p x ∨ q x),
+      match h with ⟨x, hpx_or_qx⟩ :=
+        or.elim hpx_or_qx
+          (assume hpx : p x, or.inl (exists.intro x hpx))
+          (assume hqx : q x, or.inr (exists.intro x hqx))
+      end)
+    (assume h : (∃ x, p x) ∨ (∃ x, q x),
+      or.elim h
+        (assume h1 : (∃ x, p x),
+          match h1 with ⟨x, hpx⟩ :=
+            ⟨x, or.inl hpx⟩
+          end)
+        (assume h2 : (∃ x, q x),
+          match h2 with ⟨x, hqx⟩ :=
+            ⟨x, or.inr hqx⟩
+          end))
+
+
+example : (∀ x, p x) ↔ ¬ (∃ x, ¬ p x) :=
+  iff.intro
+    (assume h : (∀ x, p x),
+      (assume h2 : (∃ x, ¬ p x),
+        match h2 with ⟨x, hnpx⟩ :=
+          hnpx (h x)
+        end))
+    (assume h : ¬ (∃ x, ¬ p x),
+      (assume x : α,
+        by_contradiction
+          (assume h2 : ¬ p x, h (exists.intro x h2))))
+
+example : (∃ x, p x) ↔ ¬ (∀ x, ¬ p x) :=
+  iff.intro
+    (assume h : (∃ x, p x),
+      match h with ⟨x, hpx⟩ :=
+        (assume h2 : ∀ x, ¬ p x, h2 x hpx)
+      end)
+    (assume h : ¬ (∀ x, ¬ p x),
+      by_contradiction
+        (assume h2 : ¬(∃ x, p x),
+          have ∀ x, ¬p x, from
+            (assume x : α, assume hpx : p x, h2 ⟨x, hpx⟩),
+          h this))
+
+example : (¬ ∃ x, p x) ↔ (∀ x, ¬ p x) :=
+  iff.intro
+    (assume h : (¬ ∃ x, p x),
+      (assume x : α, assume hpx : p x, h ⟨x, hpx⟩))
+    (assume h : (∀ x, ¬ p x),
+      assume h2 : ∃ x, p x,
+        match h2 with ⟨x, hpx⟩ :=
+          h x hpx
+        end)
+
+example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) :=
+  iff.intro
+    (assume h : (¬ ∀ x, p x),
+      by_contradiction
+        (assume h2 : (¬ ∃ x, ¬ p x),
+          have ∀ x, p x, from
+            (assume x : α,
+              by_contradiction
+                (assume h3 : ¬ p x,
+                  h2 ⟨x, h3⟩)),
+          show false, from h this))
+    (assume h : (∃ x, ¬ p x),
+      match h with ⟨x, hnpx⟩ :=
+        (assume h2 : ∀ x, p x, hnpx (h2 x))
+      end)
 
 end exercises
