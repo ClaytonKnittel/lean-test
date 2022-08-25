@@ -234,4 +234,58 @@ example : (¬ ∀ x, p x) ↔ (∃ x, ¬ p x) :=
         (assume h2 : ∀ x, p x, hnpx (h2 x))
       end)
 
+
+-- if, for all x, p x implies r, then if there exists
+-- an x such that p x, r is true, and vice versa
+example : (∀ x, p x → r) ↔ (∃ x, p x) → r :=
+  iff.intro
+    (assume h : (∀ x, p x → r),
+      (assume hx : (∃ x, p x),
+        match hx with ⟨x, hpx⟩ :=
+          h x hpx
+        end))
+    (assume h : (∃ x, p x) → r,
+      (assume x : α,
+        assume hpx : p x,
+          h (exists.intro x hpx)))
+
+example (a : α) : (∃ x, p x → r) ↔ (∀ x, p x) → r :=
+  iff.intro
+    (assume h : (∃ x, p x → r),
+      (assume h2 : (∀ x, p x),
+        match h with ⟨x, hpx_to_r⟩ :=
+          hpx_to_r (h2 x)
+        end))
+    (assume h : (∀ x, p x) → r,
+      by_contradiction
+        (assume h2 : ¬(∃ x, p x → r),
+          have ∀ x, ¬(p x → r), from
+            (assume x : α, assume hpxr : p x → r,
+              h2 (exists.intro x hpxr)),
+          have h3 : ∀ x, p x ∧ ¬r, from
+            (assume x : α, not_imp.mp (this x)),
+          have ∀ x, p x, from
+            (assume x : α, (h3 x).left),
+          show false, from (h3 a).right (h this)))
+
+example (a : α) : (∃ x, r → p x) ↔ (r → ∃ x, p x) :=
+  iff.intro
+    (assume h : (∃ x, r → p x),
+      match h with ⟨x, r_imp_px⟩ :=
+        assume hr : r,
+          exists.intro x (r_imp_px hr)
+      end)
+    (assume h : r → (∃ x, p x),
+      by_contradiction
+        (assume h2 : ¬(∃ x, r → p x),
+          have ∀ x, ¬(r → p x), from
+            forall_not_of_not_exists h2,
+          have ∀ x, r ∧ ¬ p x, from
+            (assume x : α, not_imp.mp (this x)),
+          have r ∧ ∀ x, ¬ p x, from
+            (and.intro (this a).left (assume x, (this x).right)),
+          match (h this.left) with ⟨x, hpx⟩ :=
+            (this.right x) hpx
+          end))
+
 end exercises
