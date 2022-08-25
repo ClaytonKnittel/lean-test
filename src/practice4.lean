@@ -1,4 +1,5 @@
 import data.int.basic
+import data.nat.basic
 
 namespace test
 
@@ -289,3 +290,103 @@ example (a : α) : (∃ x, r → p x) ↔ (r → ∃ x, p x) :=
           end))
 
 end exercises
+
+section exercises2
+
+variables (α : Type*) (p q : α → Prop)
+variable r : Prop
+
+example : (∀ x, p x ∧ q x) ↔ (∀ x, p x) ∧ (∀ x, q x) :=
+  iff.intro
+    (assume : (∀ x, p x ∧ q x),
+      and.intro
+        (assume x, (this x).left)
+        (assume x, (this x).right))
+    (assume : (∀ x, p x) ∧ (∀ x, q x),
+      (assume x,
+        and.intro (this.left x) (this.right x)))
+
+example : (∀ x, p x → q x) → (∀ x, p x) → (∀ x, q x) :=
+  (assume h : ∀ x, p x → q x,
+    (assume hp : ∀ x, p x,
+      assume x, (h x) (hp x)))
+
+example : (∀ x, p x) ∨ (∀ x, q x) → ∀ x, p x ∨ q x :=
+  (assume : (∀ x, p x) ∨ (∀ x, q x),
+    or.elim this
+      (assume : ∀ x, p x, assume x, or.inl (this x))
+      (assume : ∀ x, q x, assume x, or.inr (this x)))
+
+
+example : α → ((∀ x : α, r) ↔ r) :=
+  (assume a : α,
+    iff.intro
+      (assume h : ∀ x, r, h a)
+      (assume h : r, assume x, h))
+
+example : (∀ x, p x ∨ r) ↔ (∀ x, p x) ∨ r :=
+  iff.intro
+    (assume h : ∀ x, p x ∨ r,
+      or.elim (em r)
+        (assume hr : r, or.inr hr)
+        (assume hnr : ¬r, or.inl
+          (assume x, or.elim (h x)
+            (assume : p x, this)
+            (assume : r, absurd this hnr))))
+    (assume h : (∀ x, p x) ∨ r,
+      or.elim h
+        (assume : ∀ x, p x, assume x, or.inl (this x))
+        (assume : r, assume x, or.inr this))
+
+
+variables (men : Type*) (barber : men)
+variable  (shaves : men → men → Prop)
+
+example (h : ∀ x : men, shaves barber x ↔ ¬ shaves x x) : false :=
+  have barber_doesnt_shave_self : ¬ shaves barber barber, from
+    (assume : shaves barber barber, absurd this ((h barber).mp this)),
+  absurd ((h barber).mpr barber_doesnt_shave_self) barber_doesnt_shave_self
+
+
+def divides (m n : ℕ) : Prop := ∃ k : ℕ, m * k = n
+def even (n : ℕ) : Prop := ∃ k : ℕ, 2 * k = n
+
+def prime (n : ℕ) : Prop := ¬∃ k : ℕ, k > 1 ∧ k ≠ n ∧ divides k n
+
+def infinitely_many_primes : Prop :=
+  ∀ n : ℕ, ∃ p : ℕ, p > n ∧ prime p
+
+def Fermat_prime (n : ℕ) : Prop := prime n ∧ ∃ k : ℕ, k > 0 ∧ n = 2 ^ k + 1
+
+def infinitely_many_Fermat_primes : Prop :=
+  ∀ n : ℕ, ∃ p : ℕ, p > n ∧ Fermat_prime p
+
+def goldbach_conjecture : Prop :=
+  ∀ n : ℕ, (n > 2 ∧ even n) → ∃ k j : ℕ, (prime k ∧ prime j ∧ n = k + j)
+
+def Goldbach's_weak_conjecture : Prop :=
+  ∀ n : ℕ, (n > 5 ∧ ¬ even n) → ∃ k j i : ℕ, (prime k ∧ prime j ∧ prime i ∧ n = k + j + i)
+
+def Fermat's_last_theorem : Prop :=
+  ∀ n : ℕ, (n > 2) → ¬∃ a b c : ℕ, a > 0 ∧ b > 0 ∧ c > 0 ∧ (a ^ n + b ^ n = c ^ n)
+
+
+theorem inf_primes : infinitely_many_primes :=
+  have prime 2, from
+    have ∀ k : ℕ, k ≤ 1 ∨ k = 2 ∨ ¬ divides k 2, from
+      (assume k, or.elim (em (k ≤ 1))
+        (assume : k ≤ 1, or.inl this)
+        (assume k_lt_1 : ¬(k ≤ 1), or.inr (or.elim (em (k = 2))
+          (assume : k = 2, or.inl this)
+          (assume : k ≠ 2,
+            have k > 1, from
+              lt_of_not_ge k_lt_1,
+            have k > 2, from
+              sorry,
+            have ¬divides k 2, from
+              sorry,
+            or.inr this)))),
+    sorry,
+  sorry
+
+end exercises2
