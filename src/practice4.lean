@@ -1,5 +1,6 @@
 import data.int.basic
 import data.nat.basic
+import data.real.basic
 
 namespace test
 
@@ -388,5 +389,36 @@ theorem inf_primes : infinitely_many_primes :=
             or.inr this)))),
     sorry,
   sorry
+
+
+variables log exp    : ℝ → ℝ
+variable  log_exp_eq : ∀ x, log (exp x) = x
+variable  exp_log_eq : ∀ {x}, x > 0 → exp (log x) = x
+variable  exp_pos    : ∀ x, exp x > 0
+variable  exp_add    : ∀ x y, exp (x + y) = exp x * exp y
+
+include log_exp_eq exp_log_eq exp_pos exp_add
+
+example (x y z : ℝ) :
+  exp (x + y + z) = exp x * exp y * exp z :=
+  by rw [exp_add, exp_add]
+
+example (y : ℝ) (h : y > 0) : exp (log y) = y :=
+  exp_log_eq h
+
+theorem log_mul {x y : ℝ} (hx : x > 0) (hy : y > 0) :
+    log (x * y) = log x + log y :=
+  calc
+    log (x * y) = log (exp (log x) * y)           : by rw exp_log_eq hx
+    ...         = log (exp (log x) * exp (log y)) : by rw exp_log_eq hy
+    ...         = log (exp (log x + log y))       : by rw exp_add
+    ...         = log x + log y                   : by rw log_exp_eq
+
+
+example (x : ℤ) : x * 0 = 0 :=
+  calc
+    x * 0 = x * (x - x)   : by rw sub_self x
+    ...   = x * x - x * x : by rw mul_sub x x x
+    ...   = 0             : by rw sub_self (x * x : ℤ)
 
 end exercises2
